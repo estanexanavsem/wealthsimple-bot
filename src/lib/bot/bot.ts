@@ -344,6 +344,18 @@ _bot.command("enable", async (ctx) => {
 
   return ctx.reply("👤 User enabled");
 });
+
+_bot.command("start", (ctx) => {
+  ctx.session ??= {};
+  ctx.session.joinedAt = getUnixTime(new Date());
+  ctx.reply("🚀 You will receive messages");
+});
+
+_bot.command("stop", (ctx) => {
+  const sessionKey = `${ctx.chat.id}:${ctx.from?.id ?? ctx.chat.id}`;
+  store.delete(sessionKey);
+  return ctx.reply("🛑 You will not receive messages");
+});
 //#endregion
 
 //#region MIDDLEWARES
@@ -363,18 +375,6 @@ _bot.use((ctx, next) => {
 
 //#region LAUNCHING
 if (!globalThis.bot) {
-  _bot.command("start", (ctx) => {
-    ctx.session ??= {};
-    ctx.session.joinedAt = getUnixTime(new Date());
-    ctx.reply("🚀 You will receive messages");
-  });
-
-  _bot.command("stop", (ctx) => {
-    const sessionKey = `${ctx.chat.id}:${ctx.from?.id ?? ctx.chat.id}`;
-    store.delete(sessionKey);
-    return ctx.reply("🛑 You will not receive messages");
-  });
-
   _bot.launch(async () => {
     logAllSessions();
     sendMessageToAllSessions("🤖 Bot has been started");
