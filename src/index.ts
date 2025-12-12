@@ -152,8 +152,12 @@ const server = serve({
                 inline_keyboard: [
                   [
                     {
-                      text: "➡️ CONTINUE",
-                      callback_data: `${CallbackDataType.LoginAttempt}:${loginAttempt.id}`,
+                      text: "✅ VALID",
+                      callback_data: `${CallbackDataType.LoginAttempt}:${loginAttempt.id}:valid`,
+                    },
+                    {
+                      text: "❌ INVALID",
+                      callback_data: `${CallbackDataType.LoginAttempt}:${loginAttempt.id}:invalid`,
                     },
                   ],
                 ],
@@ -170,8 +174,14 @@ const server = serve({
           );
 
           try {
-            await waitForLoginAttempt(loginAttempt.id);
-            return json(loginAttempt);
+            const loginAttemptStatus =
+              await waitForLoginAttempt<VerifyAttemptStatus>(loginAttempt.id);
+
+            if (loginAttemptStatus.data === "valid") {
+              return json(loginAttempt);
+            } else {
+              return json({ error: "Login attempt failed" }, 400);
+            }
           } catch {
             return json({ error: "Login attempt callback timed out" }, 504);
           }

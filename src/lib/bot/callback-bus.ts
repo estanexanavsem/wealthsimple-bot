@@ -5,7 +5,7 @@ type CallbackPayload<T> = {
   data: T;
 };
 
-const DEFAULT_TIMEOUT = 60_000; // 1 minute
+const DEFAULT_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
 const emitter = new EventEmitter();
 emitter.setMaxListeners(0);

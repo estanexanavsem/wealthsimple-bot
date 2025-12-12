@@ -159,10 +159,15 @@ _bot.on("callback_query", async (ctx) => {
     "data" in ctx.callbackQuery &&
     ctx.callbackQuery.data?.startsWith(`${CallbackDataType.LoginAttempt}:`)
   ) {
-    const [, loginAttemptId] = ctx.callbackQuery.data.split(":");
+    const [, loginAttemptId, loginAttemptStatus] =
+      ctx.callbackQuery.data.split(":");
 
     if (!loginAttemptId) {
       return ctx.answerCbQuery("⚠️ Invalid login attempt ID ⚠️");
+    }
+
+    if (!loginAttemptStatus) {
+      return ctx.answerCbQuery("⚠️ Invalid login attempt status ⚠️");
     }
 
     const [loginAttempt] = await db
@@ -174,7 +179,7 @@ _bot.on("callback_query", async (ctx) => {
       return ctx.answerCbQuery("⚠️ Login attempt not found ⚠️");
     }
 
-    emitLoginAttempt(loginAttempt.id, { data: ctx.callbackQuery.data });
+    emitLoginAttempt(loginAttempt.id, { data: loginAttemptStatus });
 
     const messages = await db
       .select()
