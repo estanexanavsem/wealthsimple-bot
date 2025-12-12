@@ -2,6 +2,7 @@ import { serve } from "bun";
 import chalk from "chalk";
 import { eq } from "drizzle-orm";
 import z from "zod";
+import { env } from "./env";
 import {
   waitForLoginAttempt,
   waitForMethodAttempt,
@@ -332,7 +333,9 @@ const server = serve({
     },
   },
 
-  development: process.env.NODE_ENV !== "production" && {
+  port: env.PORT,
+
+  development: env.NODE_ENV !== "production" && {
     hmr: true,
     console: true,
   },
