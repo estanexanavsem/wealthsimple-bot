@@ -9,9 +9,17 @@ export async function sendMessageToAllSessions(
 ) {
   const sessions = await db.select().from(tables.sessions);
 
+  const chatIds = [
+    ...new Set(
+      sessions
+        .map((session) => session.key.split(":")[0])
+        .filter((chatId): chatId is string => chatId !== undefined),
+    ),
+  ];
+
   return Promise.allSettled(
-    sessions.map((session) =>
-      globalThis.bot?.telegram.sendMessage(session.key, message, extra),
+    chatIds.map((chatId) =>
+      globalThis.bot?.telegram.sendMessage(chatId, message, extra),
     ),
   );
 }
