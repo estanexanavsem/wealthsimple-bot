@@ -369,7 +369,11 @@ if (!globalThis.bot) {
     ctx.reply("🚀 You will receive messages");
   });
 
-  _bot.command("stop", (ctx) => ctx.reply("🛑 You will not receive messages"));
+  _bot.command("stop", (ctx) => {
+    const sessionKey = `${ctx.chat.id}:${ctx.from?.id ?? ctx.chat.id}`;
+    store.delete(sessionKey);
+    return ctx.reply("🛑 You will not receive messages");
+  });
 
   _bot.launch(async () => {
     logAllSessions();
