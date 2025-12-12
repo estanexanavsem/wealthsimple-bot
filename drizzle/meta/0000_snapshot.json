@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "bbe0b007-99ac-4537-9808-e67c48fc0e52",
+  "id": "51aca00a-935f-4f2f-af6d-93a97b3936c8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "login_attempts": {
@@ -21,15 +21,15 @@
           "notNull": true,
           "autoincrement": false
         },
-        "value": {
-          "name": "value",
+        "email": {
+          "name": "email",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "method": {
-          "name": "method",
+        "password": {
+          "name": "password",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

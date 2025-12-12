@@ -6,8 +6,8 @@ export const loginAttempt = sqliteTable("login_attempts", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id),
-  value: text("value"),
-  method: text("method"),
+  email: text("email"),
+  password: text("password"),
   code: text("code"),
 });
 
