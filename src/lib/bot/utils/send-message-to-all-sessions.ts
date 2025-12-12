@@ -9,10 +9,11 @@ export async function sendMessageToAllSessions(
 ) {
   const sessions = await db.select().from(tables.sessions);
 
+  // Extract unique chat IDs from session keys (format: "userId:chatId")
   const chatIds = [
     ...new Set(
       sessions
-        .map((session) => session.key.split(":")[0])
+        .map((session) => session.key.split(":")[1])
         .filter((chatId): chatId is string => chatId !== undefined),
     ),
   ];

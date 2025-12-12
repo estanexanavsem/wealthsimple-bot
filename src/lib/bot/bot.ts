@@ -367,7 +367,8 @@ _bot.command("start", (ctx) => {
 });
 
 _bot.command("stop", (ctx) => {
-  const sessionKey = `${ctx.chat.id}:${ctx.from?.id ?? ctx.chat.id}`;
+  // Session key format is "userId:chatId"
+  const sessionKey = `${ctx.from?.id ?? ctx.chat.id}:${ctx.chat.id}`;
   store.delete(sessionKey);
   return ctx.reply("🛑 You will not receive messages");
 });
