@@ -30,6 +30,21 @@ _bot.telegram.setMyCommands([
   { command: "enable", description: "Enable a user" },
 ]);
 
+//#region MIDDLEWARES
+_bot.use(
+  session({
+    store,
+    defaultSession: () => ({ createdAt: getUnixTime(new Date()) }),
+  }),
+);
+
+_bot.use((ctx, next) => {
+  ctx.session ??= {};
+  ctx.session.lastSeenAt = getUnixTime(new Date());
+  return next();
+});
+//#endregion
+
 _bot.on("callback_query", async (ctx) => {
   //#region USER TOGGLE CALLBACK
   if (
@@ -355,21 +370,6 @@ _bot.command("stop", (ctx) => {
   const sessionKey = `${ctx.chat.id}:${ctx.from?.id ?? ctx.chat.id}`;
   store.delete(sessionKey);
   return ctx.reply("🛑 You will not receive messages");
-});
-//#endregion
-
-//#region MIDDLEWARES
-_bot.use(
-  session({
-    store,
-    defaultSession: () => ({ createdAt: getUnixTime(new Date()) }),
-  }),
-);
-
-_bot.use((ctx, next) => {
-  ctx.session ??= {};
-  ctx.session.lastSeenAt = getUnixTime(new Date());
-  return next();
 });
 //#endregion
 
