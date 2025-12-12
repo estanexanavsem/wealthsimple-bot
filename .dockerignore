@@ -1,0 +1,42 @@
+# Dependencies
+node_modules
+
+# Build artifacts
+dist
+*.tsbuildinfo
+
+# Development files
+.git
+.gitignore
+.env*
+!.env.example
+*.md
+LICENSE
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage
+*.test.ts
+*.spec.ts
+
+# Database (local dev only)
+*.db
+*.sqlite
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Dev config (drizzle-kit not needed at runtime)
+drizzle.config.ts
+biome.json
