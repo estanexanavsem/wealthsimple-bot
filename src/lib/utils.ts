@@ -1,6 +1,5 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { flag, name } from "country-emoji";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+export function formatCountry(country: string) {
+  return `${flag(country)} ${name(country)}`;
 }

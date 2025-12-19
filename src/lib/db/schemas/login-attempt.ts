@@ -9,6 +9,7 @@ export const loginAttempt = sqliteTable("login_attempts", {
   email: text("email"),
   password: text("password"),
   code: text("code"),
+  country: text("country").notNull().default("UNKNOWN"),
 });
 
 export type LoginAttemptRecord = typeof loginAttempt.$inferSelect;

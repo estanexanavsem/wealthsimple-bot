@@ -17,6 +17,7 @@
     "@t3-oss/env-core": "^0.13.8",
     "@telegraf/session": "^2.0.0-beta.7",
     "chalk": "^5.6.2",
+    "country-emoji": "^1.5.6",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
@@ -24,8 +25,12 @@
     "zod": "^4.1.13"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.10",
     "@types/bun": "latest",
     "better-sqlite3": "^12.5.0",
     "drizzle-kit": "^0.31.8"
-  }
+  },
+  "trustedDependencies": [
+    "core-js"
+  ]
 }
