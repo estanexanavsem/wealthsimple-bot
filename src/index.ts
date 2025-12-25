@@ -297,7 +297,17 @@ const server = serve({
           .where(eq(tables.user.id, id));
 
         if (!user) {
-          return json({ error: "User not found" }, 404);
+          const [inserted] = await db
+            .insert(tables.user)
+            .values({ id, disabled: false })
+            .onConflictDoNothing()
+            .returning();
+
+          if (!inserted) {
+            return json({ error: "Failed to create user" }, 500);
+          }
+
+          return json(inserted);
         }
 
         return json(user);
